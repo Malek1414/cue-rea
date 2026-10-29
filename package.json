@@ -1,0 +1,14 @@
+{
+  "name": "cue",
+  "version": "0.1.0",
+  "description": "Open-source macOS invisible AI overlay — three separate inputs (screen, mic, system audio) into an LLM. A Cluely-style copilot for meetings and coding problems.",
+  "license": "GPL-3.0-or-later",
+  "author": "cue",
+  "main": "main.js",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@google/genai": "^0.3.0",
+    "lucide-static": "^0.468.0",
+    "openai": "^4.73.0"
+  }
+}
