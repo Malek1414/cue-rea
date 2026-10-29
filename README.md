@@ -6,7 +6,7 @@ A rebuilt copy of **cue 0.1.0** (`/Applications/cue.app`, GPL-3.0-or-later): a m
 
 ```sh
 npm install
-npm run install-app   # builds dist/cue (rea)-darwin-arm64/cue (rea).app, signs it ad-hoc, copies it to /Applications
+npm run install-app   # builds dist/cue (rea)-darwin-arm64/cue (rea).app, signs it, copies it to /Applications
 ```
 
 Then open **cue (rea)** from `/Applications`. It runs as a menu-bar-style overlay with no Dock icon, like the original. Press ⌘K to hide it and ⌘K again to bring it back; it keeps running (and listening, if you started capture) while hidden. Quit it with ⌘⇧X.
@@ -96,7 +96,7 @@ Most of that is memory pressure: generation ran at about 3 tokens a second, wher
 
 ## macOS permissions
 
-The packaged app is a separate app to macOS (`com.cue.overlay.rea`). The first time you use them, it asks for **Microphone** and **Screen Recording** access. The app is signed ad-hoc, so every rebuild counts as a new app, and you may have to grant both again after `npm run install-app`.
+The packaged app is a separate app to macOS (`com.cue.overlay.rea`). The first time you use them, it asks for **Microphone** and **Screen Recording** access. `npm run install-app` signs it with your Apple Development or Developer ID certificate if you have one (set `CUE_SIGN_IDENTITY` to pick another, or `-` for ad-hoc), so the grants survive rebuilds. Without a certificate it is signed ad-hoc: macOS then ties each grant to that exact build, and after every rebuild it asks again even though the switch in System Settings is still on. If that happens, run `tccutil reset ScreenCapture com.cue.overlay.rea` and `tccutil reset Microphone com.cue.overlay.rea`, then reopen the app and grant both again.
 
 ## Running next to the original cue
 
