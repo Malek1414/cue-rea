@@ -252,11 +252,20 @@ ipcMain.on('open-pane', (_e, url) => { shell.openExternal(url).catch(() => {}); 
 ipcMain.on('log', (_e, msg) => console.log('[renderer]', msg));
 
 // -------- shortcuts --------
+// Hide the whole overlay without quitting: capture, the transcript and the local model keep running.
+// Shown again inactive, like at launch, so it doesn't take focus from the app you're in.
+function toggleVisible() {
+  if (!win || win.isDestroyed()) return;
+  if (win.isVisible()) win.hide();
+  else win.showInactive();
+}
+
 const takenShortcuts = [];
 function registerShortcuts() {
   const reg = (accel, fn) => { if (!globalShortcut.register(accel, fn)) takenShortcuts.push(accel.replace('CommandOrControl', '⌘')); };
   reg('CommandOrControl+Return', () => runFeature('assist', ''));
   reg('CommandOrControl+H', () => runFeature('leetcode', ''));
+  reg('CommandOrControl+K', toggleVisible);
   reg('CommandOrControl+Shift+X', () => app.quit());
 }
 
