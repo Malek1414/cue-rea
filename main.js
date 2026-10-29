@@ -265,7 +265,7 @@ function registerShortcuts() {
   const reg = (accel, fn) => { if (!globalShortcut.register(accel, fn)) takenShortcuts.push(accel.replace('CommandOrControl', '⌘')); };
   reg('CommandOrControl+Return', () => runFeature('assist', ''));
   reg('CommandOrControl+H', () => runFeature('leetcode', ''));
-  reg('CommandOrControl+K', toggleVisible);
+  reg('CommandOrControl+J', toggleVisible);
   reg('CommandOrControl+Shift+X', () => app.quit());
 }
 
