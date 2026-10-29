@@ -257,12 +257,21 @@
     $('#key-gemini').value = settings.apiKeys.gemini || '';
     const m = settings.models[settings.provider] || { fast: '', smart: '' };
     $('#model-fast').value = m.fast; $('#model-smart').value = m.smart;
+    const local = settings.local || {};
+    $('#local-url').value = local.baseUrl || '';
+    $('#key-local').value = settings.apiKeys.local || '';
+    $('#local-vision').checked = local.vision !== false;
+    $('#local-stt-url').value = local.sttBaseUrl || '';
+    $('#local-stt-model').value = local.sttModel || '';
+    $('#local-fields').classList.toggle('hidden', settings.provider !== 'local');
     $('#s-status').textContent = statusText();
   }
   function statusText() {
     const k = settings.apiKeys;
     const has = [k.openai && 'OpenAI', k.anthropic && 'Anthropic', k.gemini && 'Gemini'].filter(Boolean);
-    const stt = k.openai ? 'Whisper' : (k.gemini ? 'Gemini' : 'none');
+    const local = settings.local || {};
+    const stt = local.sttBaseUrl ? 'local' : (k.openai ? 'Whisper' : (k.gemini ? 'Gemini' : 'none'));
+    if (settings.provider === 'local') return 'Active: local · ' + (local.baseUrl || 'no URL') + ' · transcription: ' + stt;
     return 'Active: ' + settings.provider + ' · keys: ' + (has.join(', ') || 'none set') + ' · transcription: ' + stt;
   }
   document.querySelectorAll('#provider-seg button').forEach((b) => b.addEventListener('click', () => {
@@ -270,6 +279,7 @@
     document.querySelectorAll('#provider-seg button').forEach((x) => x.classList.toggle('on', x === b));
     const m = settings.models[settings.provider] || { fast: '', smart: '' };
     $('#model-fast').value = m.fast; $('#model-smart').value = m.smart;
+    $('#local-fields').classList.toggle('hidden', settings.provider !== 'local');
     $('#s-status').textContent = statusText();
   }));
   async function saveSettings() {
@@ -279,8 +289,33 @@
     if (!settings.models[settings.provider]) settings.models[settings.provider] = {};
     settings.models[settings.provider].fast = $('#model-fast').value.trim();
     settings.models[settings.provider].smart = $('#model-smart').value.trim();
+    settings.apiKeys.local = $('#key-local').value.trim();
+    settings.local = {
+      ...(settings.local || {}),
+      baseUrl: $('#local-url').value.trim(),
+      vision: $('#local-vision').checked,
+      sttBaseUrl: $('#local-stt-url').value.trim(),
+      sttModel: $('#local-stt-model').value.trim()
+    };
     await cue.settingsSet(settings);
   }
+
+  // Local endpoint check: save what's typed, then GET {baseUrl}/models from main.
+  $('#local-test').addEventListener('click', async () => {
+    const out = $('#local-test-out');
+    out.className = 's-test-out'; out.textContent = 'Testing…';
+    await saveSettings();
+    const res = await cue.localTest();
+    if (!res.ok) { out.classList.add('bad'); out.textContent = res.message; return; }
+    out.classList.add('ok');
+    out.textContent = res.models.length ? 'Connected · ' + res.models.join(', ') : 'Connected · server listed no models';
+    // Fill empty model fields with what the server actually serves.
+    if (res.models.length) {
+      if (!$('#model-fast').value.trim()) $('#model-fast').value = res.models[0];
+      if (!$('#model-smart').value.trim()) $('#model-smart').value = res.models[0];
+    }
+    $('#s-status').textContent = statusText();
+  });
 
   // ---- example conversation (matches the reference screenshot) ------------
   function showExample() {
@@ -328,7 +363,7 @@
     {
       icon: '🔑',
       title: 'Connect an AI provider',
-      body: 'cue uses <strong>your own</strong> API key — pick <span class="hl">OpenAI</span>, <span class="hl">Anthropic</span>, or <span class="hl">Google Gemini</span>. Get a key from your provider, then paste it into cue\'s Settings.<br><br><strong>Tip:</strong> the listening features need speech-to-text access (an OpenAI key with Whisper, or a Gemini key). A chat-only key still powers screen &amp; coding help.',
+      body: 'cue uses <strong>your own</strong> API key — pick <span class="hl">OpenAI</span>, <span class="hl">Anthropic</span>, or <span class="hl">Google Gemini</span>. Get a key from your provider, then paste it into cue\'s Settings. Or pick <span class="hl">Local</span> to use a model running on this Mac (llama.cpp, Ollama, LM Studio) — no key needed.<br><br><strong>Tip:</strong> the listening features need speech-to-text access (an OpenAI key with Whisper, or a Gemini key). A chat-only key still powers screen &amp; coding help.',
       buttons: [{ label: 'Open cue Settings', action: () => { finishOnboard(); openSettings(); } }]
     },
     {

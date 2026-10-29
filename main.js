@@ -3,7 +3,7 @@ const path = require('path');
 const store = require('./src/store');
 const { captureScreenshot } = require('./src/screen');
 const { createSTT } = require('./src/stt');
-const { createLLM } = require('./src/llm');
+const { createLLM, probeLocal } = require('./src/llm');
 const { MODES } = require('./src/prompts');
 const { rms16 } = require('./src/wav');
 
@@ -72,7 +72,7 @@ async function flushChannel(channel) {
     const settings = store.getSettings();
     const stt = createSTT(settings);
     if (!stt.available) {
-      if (!sttDisabled) { sttDisabled = true; send('status', { message: 'No transcription key set. Add an OpenAI (Whisper) or Gemini key in Settings to enable listening. Screen/LeetCode features work without it.' }); }
+      if (!sttDisabled) { sttDisabled = true; send('status', { message: 'No transcription set up. Add a local speech-to-text URL, or an OpenAI (Whisper) or Gemini key, in Settings to enable listening. Screen/LeetCode features work without it.' }); }
       return;
     }
     const res = await stt.transcribe(pcm);
@@ -139,13 +139,15 @@ async function runFeature(mode, userText) {
     send('llm:start', { userBubble, small: !!def.small });
 
     if (!llm.ready) {
-      send('llm:error', { message: 'Add your ' + settings.provider + ' API key in Settings (gear icon) to start. Model: ' + (llm.model || 'unset') + '.' });
+      const what = settings.provider === 'local' ? 'a local model name' : 'your ' + settings.provider + ' API key';
+      send('llm:error', { message: 'Add ' + what + ' in Settings (gear icon) to start. Model: ' + (llm.model || 'unset') + '.' });
       return;
     }
 
     let imageDataUrl = null;
-    if (def.needsScreen) {
-      try { imageDataUrl = await captureScreenshot(); }
+    if (def.needsScreen && llm.vision) {
+      const maxWidth = settings.provider === 'local' ? ((settings.local && settings.local.maxImageWidth) || 1280) : undefined;
+      try { imageDataUrl = await captureScreenshot({ maxWidth }); }
       catch (e) { send('status', { message: 'Screen capture needs permission — grant Screen Recording to cue in System Settings.' }); }
     }
 
@@ -154,7 +156,8 @@ async function runFeature(mode, userText) {
       system: def.system,
       turns: [{ role: 'user', text: built }],
       imageDataUrl,
-      onToken: (t) => send('llm:token', { text: t })
+      onToken: (t) => send('llm:token', { text: t }),
+      onNotice: (m) => send('status', { message: m })
     });
     send('llm:done', {});
   } catch (e) {
@@ -169,6 +172,7 @@ ipcMain.handle('settings:get', () => store.getSettings());
 ipcMain.handle('settings:set', (_e, patch) => { sttDisabled = false; return store.setSettings(patch); });
 ipcMain.handle('capture:toggle', () => setCapturing(!state.capturing));
 ipcMain.handle('capture:state', () => ({ active: state.capturing }));
+ipcMain.handle('local:test', () => probeLocal(store.getSettings()));
 ipcMain.on('ask', (_e, payload) => runFeature(payload.mode, payload.text));
 ipcMain.on('mic:pcm', (_e, arrayBuffer) => { if (state.capturing) buffers.you.push(Buffer.from(arrayBuffer)); });
 ipcMain.on('system:pcm', (_e, arrayBuffer) => { if (state.capturing) buffers.them.push(Buffer.from(arrayBuffer)); });

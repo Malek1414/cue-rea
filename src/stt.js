@@ -1,12 +1,15 @@
 // Speech-to-text factory. Decoupled from the LLM provider because Anthropic has
 // no audio API — we transcribe with whatever audio-capable key is available, and
-// fall back across providers. Returns { text, provider } or { text:'', error }.
+// fall back across providers (a local server first, if one is set).
+// Returns { text, provider } or { text:'', error }.
 const { pcmToWav } = require('./wav');
 
-async function transcribeOpenAI(apiKey, wav, model) {
+async function transcribeOpenAI(apiKey, wav, model, baseURL) {
   const OpenAI = require('openai');
   const toFile = OpenAI.toFile || require('openai/uploads').toFile;
-  const client = new OpenAI({ apiKey });
+  // Local servers: no keep-alive (they drop idle sockets; see llm.js).
+  const httpAgent = baseURL ? new (require(/^https:/i.test(baseURL) ? 'https' : 'http').Agent)({ keepAlive: false }) : undefined;
+  const client = new OpenAI({ apiKey, baseURL, httpAgent });
   const file = await toFile(wav, 'audio.wav', { type: 'audio/wav' });
   const res = await client.audio.transcriptions.create({ file, model: model || 'whisper-1' });
   return (res.text || '').trim();
@@ -27,7 +30,14 @@ async function transcribeGemini(apiKey, wav) {
 
 function createSTT(settings) {
   const keys = settings.apiKeys || {};
+  const local = settings.local || {};
   const chain = [];
+  // Local first: an OpenAI-compatible /audio/transcriptions server (whisper.cpp
+  // whisper-server, speaches, LocalAI ...) keeps meeting audio on this machine.
+  if (local.sttBaseUrl && local.sttBaseUrl.trim()) {
+    const url = local.sttBaseUrl.trim().replace(/\/+$/, '');
+    chain.push({ p: 'local', fn: (wav) => transcribeOpenAI(keys.local || 'local', wav, local.sttModel, url) });
+  }
   if (keys.openai) chain.push({ p: 'openai', fn: (wav) => transcribeOpenAI(keys.openai, wav, settings.sttModel) });
   if (keys.gemini) chain.push({ p: 'gemini', fn: (wav) => transcribeGemini(keys.gemini, wav) });
 

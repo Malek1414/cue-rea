@@ -8,11 +8,21 @@ const FILE = path.join(app.getPath('userData'), 'cue-data.json');
 const DEFAULTS = {
   provider: 'openai',
   smart: false,
-  apiKeys: { openai: '', anthropic: '', gemini: '', deepgram: '' },
+  apiKeys: { openai: '', anthropic: '', gemini: '', deepgram: '', local: '' },
   models: {
     openai: { fast: 'gpt-4o-mini', smart: 'gpt-4o' },
     anthropic: { fast: 'claude-3-5-haiku-latest', smart: 'claude-3-5-sonnet-latest' },
-    gemini: { fast: 'gemini-1.5-flash', smart: 'gemini-1.5-pro' }
+    gemini: { fast: 'gemini-1.5-flash', smart: 'gemini-1.5-pro' },
+    // Model names your local server answers to (llama-server: its --alias).
+    local: { fast: 'qwen3.5-9b', smart: 'qwen3.5-9b' }
+  },
+  // Any OpenAI-compatible server: llama.cpp :8080/v1, Ollama :11434/v1, LM Studio :1234/v1.
+  local: {
+    baseUrl: 'http://localhost:8080/v1',
+    vision: true,       // send screenshots; needs a vision model (llama-server --mmproj)
+    maxImageWidth: 1280, // screenshots are downscaled to this width for local models
+    sttBaseUrl: '',     // optional OpenAI-compatible /audio/transcriptions server for listening
+    sttModel: 'whisper-1'
   }
 };
 
