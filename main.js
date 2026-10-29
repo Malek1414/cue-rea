@@ -4,6 +4,7 @@ const store = require('./src/store');
 const { captureScreenshot } = require('./src/screen');
 const { createSTT } = require('./src/stt');
 const { createLLM, probeLocal } = require('./src/llm');
+const localServer = require('./src/localServer');
 const { MODES } = require('./src/prompts');
 const { rms16 } = require('./src/wav');
 
@@ -20,6 +21,7 @@ const RMS_GATE = 240;
 let flushTimer = null;
 
 function send(channel, data) { if (win && !win.isDestroyed()) win.webContents.send(channel, data); }
+const notify = (message) => send('status', { message });
 
 // -------- window --------
 function createWindow() {
@@ -55,6 +57,9 @@ function createWindow() {
 
   win.webContents.on('did-finish-load', () => {
     win.showInactive();
+    // The local model may have started (or failed) before the window finished loading.
+    const srv = localServer.status();
+    if (srv.message && srv.state !== 'off') notify(srv.message);
     // Another app (often the original cue) already owns these global shortcuts.
     if (takenShortcuts.length) send('status', { message: 'Shortcuts taken by another app (is the original cue running?): ' + takenShortcuts.join(', ') + '. Buttons still work.' });
   });
@@ -142,6 +147,11 @@ async function runFeature(mode, userText) {
     const userBubble = def.userBubble !== null ? def.userBubble : (mode === 'ask' ? userText : null);
     send('llm:start', { userBubble, small: !!def.small });
 
+    if (settings.provider === 'local' && localServer.status().state === 'starting') {
+      notify('Local model is still loading (' + localServer.status().model + ') — your answer will start when it\'s ready.');
+      await localServer.whenReady(300000);
+    }
+
     if (!llm.ready) {
       const what = settings.provider === 'local' ? 'a local model name' : 'your ' + settings.provider + ' API key';
       send('llm:error', { message: 'Add ' + what + ' in Settings (gear icon) to start. Model: ' + (llm.model || 'unset') + '.' });
@@ -173,10 +183,16 @@ async function runFeature(mode, userText) {
 
 // -------- IPC --------
 ipcMain.handle('settings:get', () => store.getSettings());
-ipcMain.handle('settings:set', (_e, patch) => { sttDisabled = false; return store.setSettings(patch); });
+ipcMain.handle('settings:set', (_e, patch) => {
+  sttDisabled = false;
+  const next = store.setSettings(patch);
+  localServer.sync(next, notify);
+  return next;
+});
 ipcMain.handle('capture:toggle', () => setCapturing(!state.capturing));
 ipcMain.handle('capture:state', () => ({ active: state.capturing }));
 ipcMain.handle('local:test', () => probeLocal(store.getSettings()));
+ipcMain.handle('local:server', () => localServer.status());
 ipcMain.on('ask', (_e, payload) => runFeature(payload.mode, payload.text));
 ipcMain.on('mic:pcm', (_e, arrayBuffer) => { if (state.capturing) buffers.you.push(Buffer.from(arrayBuffer)); });
 ipcMain.on('system:pcm', (_e, arrayBuffer) => { if (state.capturing) buffers.them.push(Buffer.from(arrayBuffer)); });
@@ -210,11 +226,14 @@ app.whenReady().then(() => {
     }).catch(() => callback());
   }, { useSystemPicker: false });
 
+  localServer.sync(store.getSettings(), notify); // start the local model first: it takes a while to load
   createWindow();
   registerShortcuts();
 
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 
-app.on('will-quit', () => { globalShortcut.unregisterAll(); });
+app.on('will-quit', () => { globalShortcut.unregisterAll(); localServer.stop(); });
+// Signals skip Electron's quit events; route them through app.quit() so the model server stops too.
+['SIGTERM', 'SIGINT', 'SIGHUP'].forEach((sig) => process.on(sig, () => app.quit()));
 app.on('window-all-closed', () => app.quit());

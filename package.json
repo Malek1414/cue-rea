@@ -2,7 +2,7 @@
   "name": "cue-rea",
   "productName": "cue (rea)",
   "version": "0.1.0-rea.1",
-  "description": "Open-source macOS invisible AI overlay — three separate inputs (screen, mic, system audio) into an LLM. A Cluely-style copilot for meetings and coding problems. This build adds a Local provider for any OpenAI-compatible endpoint (llama.cpp, Ollama, LM Studio, vLLM).",
+  "description": "Open-source macOS invisible AI overlay \u2014 three separate inputs (screen, mic, system audio) into an LLM. A Cluely-style copilot for meetings and coding problems. This build adds a Local provider for any OpenAI-compatible endpoint (llama.cpp, Ollama, LM Studio, vLLM).",
   "license": "GPL-3.0-or-later",
   "author": "cue",
   "main": "main.js",
@@ -10,7 +10,9 @@
     "start": "electron .",
     "start:debug": "CUE_NO_PROTECT=1 electron .",
     "local-model": "./scripts/start-local-model.sh",
-    "test": "node test/local-provider.test.js"
+    "test": "node test/local-provider.test.js",
+    "pack": "node scripts/pack.mjs",
+    "install-app": "node scripts/pack.mjs --install"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -19,6 +21,7 @@
     "openai": "^4.73.0"
   },
   "devDependencies": {
+    "@electron/packager": "^20.3.0",
     "electron": "33.2.1"
   }
 }

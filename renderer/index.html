@@ -79,6 +79,10 @@
           <div class="s-field"><span>Base URL</span><input id="local-url" type="text" placeholder="http://localhost:8080/v1" autocomplete="off" spellcheck="false" /></div>
           <div class="s-field"><span>API key</span><input id="key-local" type="password" placeholder="optional" autocomplete="off" /></div>
           <div class="s-field"><span>Screenshots</span><label class="s-check"><input id="local-vision" type="checkbox" /> send to the model (needs a vision model)</label></div>
+          <div class="s-field"><span>Auto-start</span><label class="s-check"><input id="local-autostart" type="checkbox" /> run llama-server with cue, stop it on quit</label></div>
+          <div class="s-field"><span>Model file</span><input id="local-model-file" type="text" placeholder="~/models/….gguf" autocomplete="off" spellcheck="false" /></div>
+          <div class="s-field"><span>Vision file</span><input id="local-mmproj-file" type="text" placeholder="mmproj ….gguf (empty = text-only)" autocomplete="off" spellcheck="false" /></div>
+          <div class="s-server" id="local-server-status"></div>
           <div class="s-field"><span>STT URL</span><input id="local-stt-url" type="text" placeholder="optional, e.g. http://localhost:8178/v1" autocomplete="off" spellcheck="false" /></div>
           <div class="s-field"><span>STT model</span><input id="local-stt-model" type="text" placeholder="whisper-1" autocomplete="off" spellcheck="false" /></div>
           <div class="s-row"><button id="local-test" class="s-btn">Test connection</button><span id="local-test-out" class="s-test-out"></span></div>

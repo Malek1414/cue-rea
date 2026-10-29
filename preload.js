@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('cue', {
   captureToggle: () => ipcRenderer.invoke('capture:toggle'),
   captureState: () => ipcRenderer.invoke('capture:state'),
   localTest: () => ipcRenderer.invoke('local:test'),
+  localServer: () => ipcRenderer.invoke('local:server'),
   micPcm: (arrayBuffer) => ipcRenderer.send('mic:pcm', arrayBuffer),
   systemPcm: (arrayBuffer) => ipcRenderer.send('system:pcm', arrayBuffer),
   setIgnoreMouse: (v) => ipcRenderer.send('mouse:ignore', v),

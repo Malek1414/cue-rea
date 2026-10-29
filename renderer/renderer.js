@@ -240,7 +240,11 @@
     clearTimeout(statusTimer);
     statusTimer = setTimeout(() => el.classList.remove('show'), 11000);
   }
-  cue.on('status', ({ message }) => { cue.log('[status] ' + message); showStatus(message); });
+  cue.on('status', ({ message }) => {
+    cue.log('[status] ' + message);
+    showStatus(message);
+    if (!scrim.classList.contains('hidden')) showServerStatus(); // live model state while Settings is open
+  });
 
   // ---- settings ----------------------------------------------------------
   const scrim = $('#settings-scrim');
@@ -263,8 +267,25 @@
     $('#local-vision').checked = local.vision !== false;
     $('#local-stt-url').value = local.sttBaseUrl || '';
     $('#local-stt-model').value = local.sttModel || '';
+    $('#local-autostart').checked = local.autoStart !== false;
+    $('#local-model-file').value = (local.server && local.server.model) || '';
+    $('#local-mmproj-file').value = (local.server && local.server.mmproj) || '';
     $('#local-fields').classList.toggle('hidden', settings.provider !== 'local');
     $('#s-status').textContent = statusText();
+    showServerStatus();
+  }
+
+  // Which model the auto-started llama-server is running, and its state.
+  const SERVER_STATE = { starting: 'loading…', ready: 'running', external: 'using a server that was already running', error: 'failed', off: 'auto-start off', idle: '' };
+  async function showServerStatus() {
+    const st = await cue.localServer();
+    const el = $('#local-server-status');
+    el.innerHTML = '';
+    if (st.state === 'external' || st.state === 'off') { el.textContent = SERVER_STATE[st.state]; return; }
+    if (!st.model) return;
+    const b = document.createElement('b'); b.textContent = st.model;
+    el.append('Model: ', b, ' · ' + (SERVER_STATE[st.state] || st.state));
+    if (st.state === 'error') el.title = st.message;
   }
   function statusText() {
     const k = settings.apiKeys;
@@ -295,7 +316,13 @@
       baseUrl: $('#local-url').value.trim(),
       vision: $('#local-vision').checked,
       sttBaseUrl: $('#local-stt-url').value.trim(),
-      sttModel: $('#local-stt-model').value.trim()
+      sttModel: $('#local-stt-model').value.trim(),
+      autoStart: $('#local-autostart').checked,
+      server: {
+        ...((settings.local && settings.local.server) || {}),
+        model: $('#local-model-file').value.trim(),
+        mmproj: $('#local-mmproj-file').value.trim()
+      }
     };
     await cue.settingsSet(settings);
   }
@@ -315,6 +342,7 @@
       if (!$('#model-smart').value.trim()) $('#model-smart').value = res.models[0];
     }
     $('#s-status').textContent = statusText();
+    showServerStatus();
   });
 
   // ---- example conversation (matches the reference screenshot) ------------

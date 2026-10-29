@@ -22,7 +22,14 @@ const DEFAULTS = {
     vision: true,       // send screenshots; needs a vision model (llama-server --mmproj)
     maxImageWidth: 1280, // screenshots are downscaled to this width for local models
     sttBaseUrl: '',     // optional OpenAI-compatible /audio/transcriptions server for listening
-    sttModel: 'whisper-1'
+    sttModel: 'whisper-1',
+    autoStart: true,    // launch llama-server with cue (and stop it on quit) if nothing answers on Base URL
+    server: {
+      binary: '',       // empty = find llama-server (Homebrew, /usr/local, login-shell PATH)
+      model: '~/models/pymaster/Qwen3.5-9B-Q4_K_M.gguf',
+      mmproj: '~/models/pymaster/mmproj-F16.gguf', // vision projector; empty = text-only
+      ctx: 8192
+    }
   }
 };
 

@@ -2,15 +2,39 @@
 
 A rebuilt copy of **cue 0.1.0** (`/Applications/cue.app`, GPL-3.0-or-later): a macOS overlay that sends your screen, mic and system audio to an LLM. The code was taken from the shipped app (it ships unpacked in `Contents/Resources/app`) after an REA analysis. On top of that, this build adds a **Local** provider. It lets you point cue at a model running on your own Mac.
 
-## Quick start
+## Install
 
 ```sh
 npm install
-npm run local-model   # llama-server: Qwen3.5-9B + vision projector on http://127.0.0.1:8080/v1
-npm start             # in a second terminal
+npm run install-app   # builds dist/cue (rea)-darwin-arm64/cue (rea).app, signs it ad-hoc, copies it to /Applications
 ```
 
-Local is the default provider. Open Settings (`⋯` or `⌘,`) → **Local** → **Test connection**. You should see `Connected · qwen3.5-9b`.
+Then open **cue (rea)** from `/Applications`. It runs as a menu-bar-style overlay with no Dock icon, like the original. Quit it with ⌘⇧X.
+
+## The local model starts with the app
+
+When Local is the provider and nothing answers on the Base URL yet, cue starts **llama.cpp's `llama-server`** itself. It stops the server again when you quit. The default model is:
+
+- **Qwen3.5-9B**, file `~/models/pymaster/Qwen3.5-9B-Q4_K_M.gguf`, compressed to about 4.5 bits per weight (5.7 GB)
+- plus its vision projector `~/models/pymaster/mmproj-F16.gguf` (0.9 GB), which lets it read screenshots
+
+On launch, a status line reads `Starting local model: Qwen3.5-9B (Q4_K_M) + vision…`, then `Local model ready`. Settings → Local shows the same model and its state. If you ask something while the model is still loading, the answer starts as soon as it's ready.
+
+Settings → Local → **Auto-start / Model file / Vision file** changes this. A change restarts the server. Leave Vision file empty to run text-only.
+
+How cue handles a server it didn't start:
+- If something is already serving the Base URL (Ollama, LM Studio, or `npm run local-model`), cue uses it and never stops it.
+- The server's log is at `~/Library/Application Support/cue (rea)/llama-server.log`.
+- If cue crashes, it adopts its leftover server on the next launch.
+
+## Run from source
+
+```sh
+npm start             # auto-starts the model the same way
+npm run local-model   # or run the server yourself in a terminal (cue will then just use it)
+```
+
+Open Settings (`⋯` or `⌘,`) → **Local** → **Test connection**. You should see `Connected · qwen3.5-9b`.
 
 `npm run start:debug` turns off content protection, so the window shows up in screenshots and screen shares.
 
@@ -63,6 +87,10 @@ These numbers are from an Apple M2 with 24 GB RAM, Qwen3.5-9B Q4_K_M, and about 
 - A question with a 1280 px screenshot took about 45 s to the first token. Encoding the image alone took about 28 s.
 
 Most of that is memory pressure: generation ran at about 3 tokens a second, where this chip normally gets 12–15. To make it faster, free some RAM, use a smaller vision model, or untick Screenshots.
+
+## macOS permissions
+
+The packaged app is a separate app to macOS (`com.cue.overlay.rea`). The first time you use them, it asks for **Microphone** and **Screen Recording** access. The app is signed ad-hoc, so every rebuild counts as a new app, and you may have to grant both again after `npm run install-app`.
 
 ## Running next to the original cue
 
