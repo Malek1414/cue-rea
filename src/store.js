@@ -4,6 +4,9 @@ const path = require('path');
 const { app } = require('electron');
 
 const FILE = path.join(app.getPath('userData'), 'cue-data.json');
+// Where the overlay sits, kept out of cue-data.json: the renderer saves its whole settings object,
+// which would put back a position from before the last drag.
+const POS_FILE = path.join(app.getPath('userData'), 'window-pos.json');
 
 const DEFAULTS = {
   provider: 'local', // this build's reason to exist; switch in Settings
@@ -57,5 +60,12 @@ function save() { try { fs.writeFileSync(FILE, JSON.stringify(data, null, 2)); }
 
 module.exports = {
   getSettings() { return load(); },
-  setSettings(patch) { load(); data = deepMerge(data, patch || {}); save(); return data; }
+  setSettings(patch) { load(); data = deepMerge(data, patch || {}); save(); return data; },
+  getWindowPos() {
+    try {
+      const p = JSON.parse(fs.readFileSync(POS_FILE, 'utf8'));
+      return Array.isArray(p) && p.length === 2 && p.every(Number.isFinite) ? p : null;
+    } catch { return null; }
+  },
+  setWindowPos(pos) { try { fs.writeFileSync(POS_FILE, JSON.stringify(pos)); } catch (e) { /* ignore */ } }
 };

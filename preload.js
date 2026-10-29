@@ -11,6 +11,11 @@ contextBridge.exposeInMainWorld('cue', {
   micPcm: (arrayBuffer) => ipcRenderer.send('mic:pcm', arrayBuffer),
   systemPcm: (arrayBuffer) => ipcRenderer.send('system:pcm', arrayBuffer),
   setIgnoreMouse: (v) => ipcRenderer.send('mouse:ignore', v),
+  dragStart: () => ipcRenderer.send('drag:start'),
+  dragMove: () => ipcRenderer.send('drag:move'),
+  dragEnd: (moved) => ipcRenderer.send('drag:end', moved),
+  setUiRect: (r) => ipcRenderer.send('ui:rect', r),
+  recenter: () => ipcRenderer.send('window:recenter'),
   openPane: (url) => ipcRenderer.send('open-pane', url),
   log: (msg) => ipcRenderer.send('log', msg),
   on: (channel, cb) => {

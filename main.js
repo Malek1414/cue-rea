@@ -24,14 +24,21 @@ function send(channel, data) { if (win && !win.isDestroyed()) win.webContents.se
 const notify = (message) => send('status', { message });
 
 // -------- window --------
+// Top-center of a display, just under the menu bar: where cue starts out.
+function homePos(display, width) {
+  const { workArea: a } = display;
+  return [Math.round(a.x + (a.width - width) / 2), a.y + 6];
+}
+
 function createWindow() {
-  const { workArea } = screen.getPrimaryDisplay();
   const W = 700, H = 600;
+  // Last place the pill was dragged to; the renderer's first ui:rect pulls it back on screen if displays changed.
+  const [x, y] = store.getWindowPos() || homePos(screen.getPrimaryDisplay(), W);
   win = new BrowserWindow({
     width: W,
     height: H,
-    x: Math.round(workArea.x + (workArea.width - W) / 2),
-    y: workArea.y + 6,
+    x,
+    y,
     frame: false,
     transparent: true,
     hasShadow: false,
@@ -39,6 +46,9 @@ function createWindow() {
     skipTaskbar: true,
     alwaysOnTop: true,
     fullscreenable: false,
+    // Frameless + this: macOS stops keeping the window out of the menu bar and off the Dock,
+    // so clampPos alone decides where the dragged pill may go (right up to the notch).
+    enableLargerThanScreen: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -64,6 +74,25 @@ function createWindow() {
     if (takenShortcuts.length) send('status', { message: 'Shortcuts taken by another app (is the original cue running?): ' + takenShortcuts.join(', ') + '. Buttons still work.' });
   });
   win.webContents.on('render-process-gone', (_e, d) => console.log('[cue] renderer gone', JSON.stringify(d)));
+}
+
+// -------- moving the overlay (drag the top pill) --------
+// The renderer reports which part of the window is visible UI (pill, plus the panel unless it's
+// hidden). That part has to stay on a display; the transparent rest of the window may go off-screen.
+let uiRect = null;
+let drag = null; // { cursor, pos } at the start of a drag
+
+function clampPos(x, y) {
+  const [w, h] = win.getSize();
+  const r = uiRect || { left: 0, top: 0, right: w, bottom: h };
+  const { bounds: b } = screen.getDisplayMatching({
+    x: Math.round(x + r.left), y: Math.round(y + r.top),
+    width: Math.round(r.right - r.left), height: Math.round(r.bottom - r.top)
+  });
+  return [
+    Math.round(Math.min(Math.max(x, b.x - r.left), b.x + b.width - r.right)),
+    Math.round(Math.min(Math.max(y, b.y - r.top), b.y + b.height - r.bottom))
+  ];
 }
 
 // -------- STT flushing --------
@@ -197,6 +226,28 @@ ipcMain.on('ask', (_e, payload) => runFeature(payload.mode, payload.text));
 ipcMain.on('mic:pcm', (_e, arrayBuffer) => { if (state.capturing) buffers.you.push(Buffer.from(arrayBuffer)); });
 ipcMain.on('system:pcm', (_e, arrayBuffer) => { if (state.capturing) buffers.them.push(Buffer.from(arrayBuffer)); });
 ipcMain.on('mouse:ignore', (_e, v) => { if (win) win.setIgnoreMouseEvents(!!v, { forward: true }); });
+// Drag moves follow the real cursor, so the pill stays under the grab point at any speed or display scale.
+ipcMain.on('drag:start', () => { if (win) drag = { cursor: screen.getCursorScreenPoint(), pos: win.getPosition() }; });
+ipcMain.on('drag:move', () => {
+  if (!win || !drag) return;
+  const c = screen.getCursorScreenPoint();
+  win.setPosition(...clampPos(drag.pos[0] + c.x - drag.cursor.x, drag.pos[1] + c.y - drag.cursor.y));
+});
+ipcMain.on('drag:end', (_e, moved) => {
+  if (!drag) return;
+  drag = null;
+  if (moved && win) store.setWindowPos(win.getPosition());
+});
+ipcMain.on('ui:rect', (_e, r) => {
+  uiRect = r;
+  if (win && !drag) win.setPosition(...clampPos(...win.getPosition())); // e.g. un-hiding the panel near an edge
+});
+ipcMain.on('window:recenter', () => {
+  if (!win) return;
+  const pos = homePos(screen.getDisplayMatching(win.getBounds()), win.getSize()[0]);
+  win.setPosition(...pos);
+  store.setWindowPos(pos);
+});
 ipcMain.on('open-pane', (_e, url) => { shell.openExternal(url).catch(() => {}); });
 ipcMain.on('log', (_e, msg) => console.log('[renderer]', msg));
 

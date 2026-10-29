@@ -14,7 +14,8 @@
   // Filled glyphs (no stroke)
   const FILLED = {
     play: '<path d="M6 4.5v15a1 1 0 0 0 1.5.87l12-7.5a1 1 0 0 0 0-1.74l-12-7.5A1 1 0 0 0 6 4.5z"/>',
-    'stop-square': '<rect x="5" y="5" width="14" height="14" rx="3.5"/>'
+    'stop-square': '<rect x="5" y="5" width="14" height="14" rx="3.5"/>',
+    'grip-vertical': '<circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/>'
   };
   // cue logo — a pinwheel/compass mark inside a ring, echoing Cluely's glyph.
   const LOGO = '<svg viewBox="0 0 24 24" width="SIZE" height="SIZE" fill="none" xmlns="http://www.w3.org/2000/svg">' +

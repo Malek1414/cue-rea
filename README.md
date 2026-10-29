@@ -11,6 +11,12 @@ npm run install-app   # builds dist/cue (rea)-darwin-arm64/cue (rea).app, signs 
 
 Then open **cue (rea)** from `/Applications`. It runs as a menu-bar-style overlay with no Dock icon, like the original. Quit it with ⌘⇧X.
 
+## Moving it
+
+Drag the top pill to move cue. You can grab it anywhere, buttons included: a press that doesn't move still clicks the button. Double-click the ⋮⋮ grip at the pill's right end to put it back at the top center. cue remembers where you left it, in `~/Library/Application Support/cue (rea)/window-pos.json`.
+
+While the panel is open, the whole panel stays on screen. Once you hide it (Hide), the pill alone can go anywhere, up into the menu bar next to the notch if you like. Showing the panel again pulls cue back just far enough for it to fit.
+
 ## The local model starts with the app
 
 When Local is the provider and nothing answers on the Base URL yet, cue starts **llama.cpp's `llama-server`** itself. It stops the server again when you quit. The default model is:

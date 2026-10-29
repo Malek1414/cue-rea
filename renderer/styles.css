@@ -53,7 +53,6 @@ html, body {
   pointer-events: none;                  /* only the actual UI blocks; gaps pass through */
 }
 #toolbar, #panel-wrap, #settings-scrim, #onboard-scrim { pointer-events: auto; }
-#toolbar { -webkit-app-region: drag; }   /* the pill is the window's drag handle */
 .no-drag, button, input, textarea { -webkit-app-region: no-drag; }
 
 /* ============================ Toolbar pill ============================ */
@@ -80,6 +79,11 @@ html, body {
 .tb-stop { width: 28px; height: 28px; border-radius: var(--r-8); color: #fff; }
 .tb-stop:hover { background: rgba(255,255,255,0.08); }
 .tb-stop.active { color: #ff6b6b; }
+/* Moving: the renderer drags the window (not -webkit-app-region, which would eat the buttons' clicks). */
+#toolbar { cursor: grab; }
+#toolbar.dragging, #toolbar.dragging * { cursor: grabbing !important; }
+.tb-grip { width: 16px; height: 28px; margin-right: 2px; display: inline-flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.40); transition: color 140ms ease; }
+.tb-grip:hover, #toolbar.dragging .tb-grip { color: rgba(255,255,255,0.85); }
 
 /* ============================ Panel ============================ */
 #panel-wrap { position: relative; margin-top: 12px; width: min(624px, 94vw); }

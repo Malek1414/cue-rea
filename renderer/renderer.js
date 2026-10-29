@@ -8,6 +8,7 @@
   $('#logo-btn').innerHTML = icon('logo', { size: 18 });
   $('.tb-hide .chev').innerHTML = icon('chevron-down', { size: 14 });
   $('#stop-btn').innerHTML = icon('stop-square', { size: 15 });
+  $('#grip').innerHTML = icon('grip-vertical', { size: 14 });
   document.querySelector('.act[data-mode="assist"] .ic').innerHTML = icon('sparkles', { size: 16 });
   document.querySelector('.act[data-mode="say"] .ic').innerHTML = icon('wand-sparkles', { size: 16 });
   document.querySelector('.act[data-mode="followup"] .ic').innerHTML = icon('message-circle', { size: 16 });
@@ -137,6 +138,7 @@
     const collapsed = $('#panel').classList.toggle('collapsed');
     $('#hide-btn').classList.toggle('collapsed', collapsed);
     $('#live-dot').style.display = collapsed ? 'none' : '';
+    sendUiRect();
   });
 
   // Stop = start/stop listening. Kick off system-audio capture straight from the click so
@@ -361,10 +363,61 @@
     if (e.metaKey && e.key === ',') { e.preventDefault(); openSettings(); }
   });
 
+  // ---- move: drag the pill (buttons too) to move cue; double-click the grip to put it back ----
+  const toolbar = $('#toolbar');
+  let press = null;          // { x, y, id } while the mouse is down on the pill
+  let dragging = false;      // the press has moved far enough to count as a drag
+  let eatClick = false;      // a drag that started on a button must not also click it
+
+  // The part of the window that must stay on screen: the pill, plus the panel unless it's hidden.
+  // An answer can grow the panel down to the window's bottom edge, so count all of that.
+  function sendUiRect() {
+    const t = toolbar.getBoundingClientRect();
+    const r = { left: t.left, top: t.top, right: t.right, bottom: t.bottom };
+    if (!$('#panel').classList.contains('collapsed')) {
+      const p = $('#panel-wrap').getBoundingClientRect();
+      r.left = Math.min(r.left, p.left); r.right = Math.max(r.right, p.right); r.bottom = window.innerHeight;
+    }
+    cue.setUiRect(r);
+  }
+  window.addEventListener('resize', sendUiRect);
+
+  toolbar.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    press = { x: e.screenX, y: e.screenY, id: e.pointerId };
+    dragging = false;
+    cue.dragStart();
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!press) return;
+    if (!(e.buttons & 1)) { endDrag(); return; } // the release happened somewhere we didn't see
+    if (!dragging) {
+      if (Math.hypot(e.screenX - press.x, e.screenY - press.y) < 4) return;
+      dragging = true;
+      // Capture only once it's a drag: capturing on press would retarget a plain click away from the button.
+      toolbar.setPointerCapture(press.id);
+      toolbar.classList.add('dragging');
+    }
+    cue.dragMove();
+  });
+  function endDrag() {
+    if (!press) return;
+    press = null;
+    toolbar.classList.remove('dragging');
+    cue.dragEnd(dragging);
+    if (dragging) { eatClick = true; setTimeout(() => { eatClick = false; }, 0); }
+    dragging = false;
+  }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('blur', endDrag);
+  toolbar.addEventListener('click', (e) => { if (eatClick) { e.stopPropagation(); e.preventDefault(); } }, true);
+  $('#grip').addEventListener('dblclick', () => cue.recenter());
+
   // ---- click-through: only the UI blocks the mouse; empty gaps pass to your screen ----
   let ignoring = null;
   function setIgnore(v) { if (v !== ignoring) { ignoring = v; cue.setIgnoreMouse(v); } }
   document.addEventListener('mousemove', (e) => {
+    if (press) return; // mid-drag the cursor can leave the pill (at a screen edge); keep the mouse until release
     const el = document.elementFromPoint(e.clientX, e.clientY);
     const overUI = !!(el && el.closest && el.closest('#toolbar, #panel-wrap, #settings-scrim, #onboard-scrim'));
     setIgnore(!overUI);
@@ -402,7 +455,7 @@
     {
       icon: '✨',
       title: 'You’re all set',
-      body: 'How to use cue:<ul><li><span class="kbd">⌘</span> <span class="kbd">↵</span> — <strong>Assist</strong> with whatever\'s on screen or being said</li><li><span class="kbd">⌘</span> <span class="kbd">H</span> — solve a coding problem on screen</li><li>Click <strong>▢</strong> in the top bar to start listening to a meeting</li><li>Type a question and press <span class="kbd">↵</span></li></ul>Reopen this guide anytime by clicking the <strong>cue logo</strong>. Quit with <span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">X</span>.'
+      body: 'How to use cue:<ul><li><span class="kbd">⌘</span> <span class="kbd">↵</span> — <strong>Assist</strong> with whatever\'s on screen or being said</li><li><span class="kbd">⌘</span> <span class="kbd">H</span> — solve a coding problem on screen</li><li>Click <strong>▢</strong> in the top bar to start listening to a meeting</li><li>Type a question and press <span class="kbd">↵</span></li><li>Drag the top bar to move cue; double-click its <strong>⋮⋮</strong> grip to put it back</li></ul>Reopen this guide anytime by clicking the <strong>cue logo</strong>. Quit with <span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">X</span>.'
     }
   ];
   let obIndex = 0;
@@ -435,6 +488,7 @@
     smartBtn.classList.toggle('on', !!settings.smart);
     showExample();
     syncPlaceholder();
+    sendUiRect();
     const st = await cue.captureState();
     $('#live-dot').classList.toggle('off', !st.active);
     $('#stop-btn').classList.toggle('active', st.active);

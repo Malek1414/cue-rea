@@ -1,8 +1,8 @@
 {
   "name": "cue-rea",
   "productName": "cue (rea)",
-  "version": "0.1.0-rea.1",
-  "description": "Open-source macOS invisible AI overlay \u2014 three separate inputs (screen, mic, system audio) into an LLM. A Cluely-style copilot for meetings and coding problems. This build adds a Local provider for any OpenAI-compatible endpoint (llama.cpp, Ollama, LM Studio, vLLM).",
+  "version": "0.1.0-rea.2",
+  "description": "Open-source macOS invisible AI overlay — three separate inputs (screen, mic, system audio) into an LLM. A Cluely-style copilot for meetings and coding problems. This build adds a Local provider for any OpenAI-compatible endpoint (llama.cpp, Ollama, LM Studio, vLLM).",
   "license": "GPL-3.0-or-later",
   "author": "cue",
   "main": "main.js",
