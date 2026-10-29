@@ -9,7 +9,7 @@ npm install
 npm run install-app   # builds dist/cue (rea)-darwin-arm64/cue (rea).app, signs it ad-hoc, copies it to /Applications
 ```
 
-Then open **cue (rea)** from `/Applications`. It runs as a menu-bar-style overlay with no Dock icon, like the original. Press ⌘J to hide it and ⌘J again to bring it back; it keeps running (and listening, if you started capture) while hidden. Quit it with ⌘⇧X.
+Then open **cue (rea)** from `/Applications`. It runs as a menu-bar-style overlay with no Dock icon, like the original. Press ⌘K to hide it and ⌘K again to bring it back; it keeps running (and listening, if you started capture) while hidden. Quit it with ⌘⇧X.
 
 ## Moving it
 
@@ -100,7 +100,7 @@ The packaged app is a separate app to macOS (`com.cue.overlay.rea`). The first t
 
 ## Running next to the original cue
 
-Both apps register ⌘↵, ⌘H and ⌘⇧X (this build also registers ⌘J). If the original cue already holds them, this build shows a status line saying so. Quit the original cue while you use this one. Settings are stored separately: `~/Library/Application Support/cue (rea)/cue-data.json`.
+Both apps register ⌘↵, ⌘H and ⌘⇧X (this build also registers ⌘K). If the original cue already holds them, this build shows a status line saying so. Quit the original cue while you use this one. Settings are stored separately: `~/Library/Application Support/cue (rea)/cue-data.json`.
 
 ## Tests
 

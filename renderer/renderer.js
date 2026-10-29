@@ -455,7 +455,7 @@
     {
       icon: '✨',
       title: 'You’re all set',
-      body: 'How to use cue:<ul><li><span class="kbd">⌘</span> <span class="kbd">↵</span> — <strong>Assist</strong> with whatever\'s on screen or being said</li><li><span class="kbd">⌘</span> <span class="kbd">H</span> — solve a coding problem on screen</li><li><span class="kbd">⌘</span> <span class="kbd">J</span> — hide cue, press again to bring it back</li><li>Click <strong>▢</strong> in the top bar to start listening to a meeting</li><li>Type a question and press <span class="kbd">↵</span></li><li>Drag the top bar to move cue; double-click its <strong>⋮⋮</strong> grip to put it back</li></ul>Reopen this guide anytime by clicking the <strong>cue logo</strong>. Quit with <span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">X</span>.'
+      body: 'How to use cue:<ul><li><span class="kbd">⌘</span> <span class="kbd">↵</span> — <strong>Assist</strong> with whatever\'s on screen or being said</li><li><span class="kbd">⌘</span> <span class="kbd">H</span> — solve a coding problem on screen</li><li><span class="kbd">⌘</span> <span class="kbd">K</span> — hide cue, press again to bring it back</li><li>Click <strong>▢</strong> in the top bar to start listening to a meeting</li><li>Type a question and press <span class="kbd">↵</span></li><li>Drag the top bar to move cue; double-click its <strong>⋮⋮</strong> grip to put it back</li></ul>Reopen this guide anytime by clicking the <strong>cue logo</strong>. Quit with <span class="kbd">⌘</span><span class="kbd">⇧</span><span class="kbd">X</span>.'
     }
   ];
   let obIndex = 0;
