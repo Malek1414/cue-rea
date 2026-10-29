@@ -6,7 +6,7 @@ const { app } = require('electron');
 const FILE = path.join(app.getPath('userData'), 'cue-data.json');
 
 const DEFAULTS = {
-  provider: 'openai',
+  provider: 'local', // this build's reason to exist; switch in Settings
   smart: false,
   apiKeys: { openai: '', anthropic: '', gemini: '', deepgram: '', local: '' },
   models: {

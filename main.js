@@ -53,7 +53,11 @@ function createWindow() {
 
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
-  win.webContents.on('did-finish-load', () => win.showInactive());
+  win.webContents.on('did-finish-load', () => {
+    win.showInactive();
+    // Another app (often the original cue) already owns these global shortcuts.
+    if (takenShortcuts.length) send('status', { message: 'Shortcuts taken by another app (is the original cue running?): ' + takenShortcuts.join(', ') + '. Buttons still work.' });
+  });
   win.webContents.on('render-process-gone', (_e, d) => console.log('[cue] renderer gone', JSON.stringify(d)));
 }
 
@@ -181,10 +185,12 @@ ipcMain.on('open-pane', (_e, url) => { shell.openExternal(url).catch(() => {}); 
 ipcMain.on('log', (_e, msg) => console.log('[renderer]', msg));
 
 // -------- shortcuts --------
+const takenShortcuts = [];
 function registerShortcuts() {
-  globalShortcut.register('CommandOrControl+Return', () => runFeature('assist', ''));
-  globalShortcut.register('CommandOrControl+H', () => runFeature('leetcode', ''));
-  globalShortcut.register('CommandOrControl+Shift+X', () => app.quit());
+  const reg = (accel, fn) => { if (!globalShortcut.register(accel, fn)) takenShortcuts.push(accel.replace('CommandOrControl', '⌘')); };
+  reg('CommandOrControl+Return', () => runFeature('assist', ''));
+  reg('CommandOrControl+H', () => runFeature('leetcode', ''));
+  reg('CommandOrControl+Shift+X', () => app.quit());
 }
 
 // -------- lifecycle --------

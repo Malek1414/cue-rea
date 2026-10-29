@@ -254,7 +254,7 @@ button:focus { outline: none; }
 #settings { max-height: calc(100vh - 24px); overflow-y: auto; }
 #local-fields { display: flex; flex-direction: column; gap: 8px; }
 .s-check { flex: 1; display: flex; align-items: center; gap: 8px; color: var(--tx-2); font-size: 12px; cursor: pointer; }
-.s-check input { width: 15px; height: 15px; margin: 0; accent-color: var(--accent); }
+.s-check input { flex: none; width: 15px; height: 15px; margin: 0; padding: 0; accent-color: var(--accent); }
 .s-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
 .s-btn { border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.06); color: var(--tx-1); font-size: 12px; font-weight: 500; padding: 6px 12px; border-radius: var(--r-pill); cursor: pointer; }
 .s-btn:hover { border-color: var(--accent); }
